@@ -96,32 +96,38 @@ const TRACKINFO = Struct({
   Status: ArrayType('byte', 3),
 });
 
-const libact = ffi.Library(hazardous(path.join(__dirname, './lib/F6_30_API')), {
-  F6_Connect: [ 'int', [ 'int', 'int', 'pointer' ]],
-  F6_Disconnect: [ 'int', [ 'int' ]],
-  F6_Cancel: [ 'int', [ 'int' ]],
-  F6_Reset: [ 'int', [ 'int', 'byte', 'pointer', 'pointer' ]],
-  F6_Entry: [ 'int', [ 'int', 'byte' ]],
-  F6_PermitInsertion: [ 'int', [ 'int' ]],
-  F6_DenieInsertion: [ 'int', [ 'int' ]],
-  F6_MoveCard: [ 'int', [ 'int', 'byte' ]],
-  F6_LedControl: [ 'int', [ 'int', 'byte' ]],
-  F6_SetBaudRate: [ 'int', [ 'int', 'byte' ]],
-  F6_GetStatus: [ 'int', [ 'int', 'pointer' ]],
-  F6_GetSenserDetail: [ 'int', [ 'int', 'pointer' ]], // 接收状态信息的数组，长度为 9 个字节 byte。
-  F6_GetSenserLevel: [ 'int', [ 'int', 'pointer' ]], // 接收状态信息的数组，长度为 9 个字节 float。
-  F6_DetectICCType: [ 'int', [ 'int', 'pointer' ]],
-  F6_DetectRFCardType: [ 'int', [ 'int', 'pointer' ]],
-  F6_IccPowerOn: [ 'int', [ 'int' ]],
-  F6_IccPowerOff: [ 'int', [ 'int' ]],
-  F6_CpuActivate: [ 'int', [ 'int', 'byte', 'pointer', 'pointer', 'pointer' ]],
-  F6_CpuDeactivate: [ 'int', [ 'int' ]],
-  F6_CpuTransmit: [ 'int', [ 'int', 'byte', 'string', 'int', 'pointer', 'pointer' ]],
-  F6_ReadTracks: [ 'int', [ 'int', 'byte', 'int', ref.refType(TRACKINFO) ]],
-});
+function getLibact(){
+  if(!hardware.libact){
+    hardware.libact = ffi.Library(hazardous(path.join(__dirname, './lib/F6_30_API')), {
+      F6_Connect: [ 'int', [ 'int', 'int', 'pointer' ]],
+      F6_Disconnect: [ 'int', [ 'int' ]],
+      F6_Cancel: [ 'int', [ 'int' ]],
+      F6_Reset: [ 'int', [ 'int', 'byte', 'pointer', 'pointer' ]],
+      F6_Entry: [ 'int', [ 'int', 'byte' ]],
+      F6_PermitInsertion: [ 'int', [ 'int' ]],
+      F6_DenieInsertion: [ 'int', [ 'int' ]],
+      F6_MoveCard: [ 'int', [ 'int', 'byte' ]],
+      F6_LedControl: [ 'int', [ 'int', 'byte' ]],
+      F6_SetBaudRate: [ 'int', [ 'int', 'byte' ]],
+      F6_GetStatus: [ 'int', [ 'int', 'pointer' ]],
+      F6_GetSenserDetail: [ 'int', [ 'int', 'pointer' ]], // 接收状态信息的数组，长度为 9 个字节 byte。
+      F6_GetSenserLevel: [ 'int', [ 'int', 'pointer' ]], // 接收状态信息的数组，长度为 9 个字节 float。
+      F6_DetectICCType: [ 'int', [ 'int', 'pointer' ]],
+      F6_DetectRFCardType: [ 'int', [ 'int', 'pointer' ]],
+      F6_IccPowerOn: [ 'int', [ 'int' ]],
+      F6_IccPowerOff: [ 'int', [ 'int' ]],
+      F6_CpuActivate: [ 'int', [ 'int', 'byte', 'pointer', 'pointer', 'pointer' ]],
+      F6_CpuDeactivate: [ 'int', [ 'int' ]],
+      F6_CpuTransmit: [ 'int', [ 'int', 'byte', 'string', 'int', 'pointer', 'pointer' ]],
+      F6_ReadTracks: [ 'int', [ 'int', 'byte', 'int', ref.refType(TRACKINFO) ]],
+    });
+  }
+  return hardware.libact;
+}
 
 hardware.F6_Connect = (port, baudRate) => {
   try {
+    const libact = getLibact();
     if (!baudRate) baudRate = 9600;
     const handle = ref.alloc(ref.types.long);
     const res = libact.F6_Connect(port, baudRate, handle);
@@ -136,6 +142,7 @@ hardware.F6_Connect = (port, baudRate) => {
 
 hardware.F6_Disconnect = handle => {
   try {
+    const libact = getLibact();
     const res = libact.F6_Disconnect(handle);
     if (res === 0) {
       return { error: 0 };
@@ -154,6 +161,7 @@ hardware.F6_Disconnect = handle => {
  */
 hardware.F6_Reset = (handle, action) => {
   try {
+    const libact = getLibact();
     if (!action) action = 0x30;
     const len = ref.alloc(ref.types.byte);
     const data = ref.alloc(ref.types.char);
@@ -169,6 +177,7 @@ hardware.F6_Reset = (handle, action) => {
 
 hardware.F6_Cancel = handle => {
   try {
+    const libact = getLibact();
     const res = libact.F6_Cancel(handle);
     if (res === 0) {
       return { error: 0 };
@@ -185,6 +194,7 @@ hardware.F6_Cancel = handle => {
  */
 hardware.F6_Entry = (handle, action) => {
   try {
+    const libact = getLibact();
     if (!action) action = 0x30;
     const res = libact.F6_Entry(handle, action);
     if (res === 0) {
@@ -198,6 +208,7 @@ hardware.F6_Entry = (handle, action) => {
 
 hardware.F6_PermitInsertion = handle => {
   try {
+    const libact = getLibact();
     const res = libact.F6_PermitInsertion(handle);
     if (res === 0) {
       return { error: 0 };
@@ -210,6 +221,7 @@ hardware.F6_PermitInsertion = handle => {
 
 hardware.F6_DenieInsertion = handle => {
   try {
+    const libact = getLibact();
     const res = libact.F6_DenieInsertion(handle);
     if (res === 0) {
       return { error: 0 };
@@ -231,6 +243,7 @@ hardware.F6_DenieInsertion = handle => {
  */
 hardware.F6_MoveCard = (handle, action) => {
   try {
+    const libact = getLibact();
     if (!action) action = 0x30;
     const res = libact.F6_MoveCard(handle, action);
     if (res === 0) {
@@ -249,6 +262,7 @@ hardware.F6_MoveCard = (handle, action) => {
  */
 hardware.F6_LedControl = (handle, action) => {
   try {
+    const libact = getLibact();
     if (!action) action = 0x30;
     const res = libact.F6_LedControl(handle, action);
     if (res === 0) {
@@ -262,6 +276,7 @@ hardware.F6_LedControl = (handle, action) => {
 
 hardware.F6_SetBaudRate = (handle, baudRate) => {
   try {
+    const libact = getLibact();
     if (!baudRate) baudRate = 9600;
     const res = libact.F6_SetBaudRate(handle, baudRate);
     if (res === 0) {
@@ -285,6 +300,7 @@ hardware.F6_SetBaudRate = (handle, baudRate) => {
  */
 hardware.F6_GetStatus = handle => {
   try {
+    const libact = getLibact();
     const status = ref.alloc(ref.types.byte);
     const res = libact.F6_GetStatus(handle, status);
     if (res === 0) {
@@ -309,6 +325,7 @@ hardware.F6_GetStatus = handle => {
  */
 hardware.F6_GetSenserDetail = handle => {
   try {
+    const libact = getLibact();
     const status = new Buffer(10 * ref.types.byte.size);
     const res = libact.F6_GetSenserDetail(handle, status);
     if (res === 0) {
@@ -322,6 +339,7 @@ hardware.F6_GetSenserDetail = handle => {
 
 hardware.F6_GetSenserLevel = handle => {
   try {
+    const libact = getLibact();
     const status = new Buffer(10 * ref.types.float.size);
     const res = libact.F6_GetSenserLevel(handle, status);
     if (res === 0) {
@@ -353,6 +371,7 @@ hardware.F6_GetSenserLevel = handle => {
  */
 hardware.F6_DetectICCType = handle => {
   try {
+    const libact = getLibact();
     const status = ref.alloc(ref.types.byte);
     const res = libact.F6_DetectICCType(handle, status);
     if (res === 0) {
@@ -375,6 +394,7 @@ hardware.F6_DetectICCType = handle => {
  */
 hardware.F6_DetectRFCardType = handle => {
   try {
+    const libact = getLibact();
     const status = ref.alloc(ref.types.byte);
     const res = libact.F6_DetectRFCardType(handle, status);
     if (res === 0) {
@@ -388,6 +408,7 @@ hardware.F6_DetectRFCardType = handle => {
 
 hardware.F6_IccPowerOn = handle => {
   try {
+    const libact = getLibact();
     const res = libact.F6_IccPowerOn(handle);
     if (res === 0) {
       return { error: 0 };
@@ -400,6 +421,7 @@ hardware.F6_IccPowerOn = handle => {
 
 hardware.F6_IccPowerOff = handle => {
   try {
+    const libact = getLibact();
     const res = libact.F6_IccPowerOff(handle);
     if (res === 0) {
       return { error: 0 };
@@ -412,6 +434,7 @@ hardware.F6_IccPowerOff = handle => {
 
 hardware.F6_CpuDeactivate = handle => {
   try {
+    const libact = getLibact();
     const res = libact.F6_CpuDeactivate(handle);
     if (res === 0) {
       return { error: 0 };
@@ -429,6 +452,7 @@ hardware.F6_CpuDeactivate = handle => {
  */
 hardware.F6_CpuActivate = (handle, voltage) => {
   try {
+    const libact = getLibact();
     if (!voltage) voltage = 0x32;
     const len = ref.alloc(ref.types.int);
     const data = ref.alloc(ref.types.byte);
@@ -446,6 +470,7 @@ hardware.F6_CpuActivate = (handle, voltage) => {
 
 hardware.F6_CpuTransmit = (handle, protocol, sendBuff) => {
   try {
+    const libact = getLibact();
     sendBuff = str2Hex(sendBuff);
     const len = ref.alloc(ref.types.byte);
     const data = ref.alloc(ref.types.char);
@@ -469,6 +494,7 @@ hardware.F6_CpuTransmit = (handle, protocol, sendBuff) => {
  */
 hardware.F6_ReadTracks = (handle, mode, trackId) => {
   try {
+    const libact = getLibact();
     const trackInfo = new TRACKINFO();
     const res = libact.F6_ReadTracks(handle, mode, trackId, trackInfo.ref());
     if (res === 0) {
